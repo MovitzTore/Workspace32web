@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smooth Scroll Background Fade</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 250vh; /* Increased for more content */
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ffr-minecraft.net%2Fupload%2Fwallpapers%2Fimages%2Ffr-minecraft_wallpaper_CYZW.png&f=1&nofb=1&ipt=77f02a36f8f12effdd433aa0806ccd34c2664a50ba98a64bd3ee85d983cc6f5e');
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+            filter: blur(8px);
+        }
+
+        .white-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: -1;
+            transition: background-color 0.2s;
+            pointer-events: none;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 64px;
+            font-weight: 300;
+            color: #222;
+            margin-top: 80px;
+            letter-spacing: 1px;
+            user-select: none;
+        }
+
+        .content {
+            margin-top: 200px;
+            text-align: center;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .floating-dots {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #888;
+            border-radius: 50%;
+            opacity: 0.7;
+            transform: translate(-50%, -50%);
+        }
+
+        .line {
+            position: absolute;
+            height: 1px;
+            background-color: #888;
+            transform-origin: 0 0;
+            opacity: 0.4;
+            z-index: -1;
+        }
+        
+        /* Promises checklist styles */
+        .promises {
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: left;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .promise-item {
+            margin: 20px 0;
+            font-size: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            line-height: 1.5;
+        }
+        
+        .check-emoji {
+            margin-right: 15px;
+            font-size: 24px;
+            color: #38a169;
+        }
+        
+        .promises-title {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        /* FAQ Section Styles */
+        .faq-section {
+            max-width: 700px;
+            margin: 60px auto;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-title {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .faq-item {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .faq-question {
+            width: 100%;
+            text-align: left;
+            padding: 15px 0;
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #2d3748;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+        
+        .faq-question:hover {
+            color: #4a5568;
+        }
+        
+        .faq-question::after {
+            content: '+';
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+        
+        .faq-question.active::after {
+            content: '-';
+            transform: rotate(0deg);
+        }
+        
+        .faq-answer {
+            padding: 0;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a5568;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            will-change: max-height;
+        }
+        
+        .faq-answer.show {
+            max-height: 500px;
+            padding: 0 0 15px 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .faq-answer-inner {
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: fadeIn 0.3s ease-out forwards;
+            animation-delay: 0.1s;
+        }
+        
+        .faq-answer.show .faq-answer-inner {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="white-overlay" id="overlay"></div>
+    <div class="floating-dots" id="floatingDots"></div>
+    
+    <div class="header">Welcome To Our Minecraft Server!</div>
+    <div class="content">
+        <p>We are so happy to have you here!</p>
+        <p>♥️</p>
+        
+        <div class="promises">
+            <div class="promises-title">Our Commitment to You</div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>Thrilling Lifesteal gameplay</span>
+            </div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>True Anarchy experience</span>
+            </div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>Vibrant, active community</span>
+            </div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>No pay-to-win microtransactions</span>
+            </div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>Keep Inventory feature</span>
+            </div>
+            
+            <div class="promise-item">
+                <span class="check-emoji">✅</span>
+                <span>Quality-of-life plugins to enhance your experience</span>
+            </div>
+        </div>
+        
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <div class="faq-title">Frequently Asked Questions</div>
+            
+            <div class="faq-item">
+                <button class="faq-question">How do I join the server?</button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>The Minecraft server is open from 7 AM to 10 PM CEST (UTC+2). The IP to the Minecraft Server is available in our <a href="https://discord.gg/6AtMuGzTEE" target="_blank">Discord server</a>.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <button class="faq-question">What is Lifesteal gameplay?</button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Lifesteal is a unique gameplay mode where when you kill another player, you steal one of their hearts and gain it for yourself. This creates intense PvP battles where players can grow stronger by defeating others.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <button class="faq-question">Is there any rules on this anarchy server?</button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>While we promote freedom in our anarchy environment, we do have a few basic rules: no hacking/cheating, no doxxing, and no lag machines that crash the server. Other than that, anything goes!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <button class="faq-question">How does the Keep Inventory feature work?</button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>When you die, you keep all your inventory items and experience points. However, you still lose hearts when killed by another player in our Lifesteal system. This reduces frustration from random deaths while maintaining the competitive Lifesteal aspect.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const overlay = document.getElementById('overlay');
+        const floatingDots = document.getElementById('floatingDots');
+        
+        // Create floating dots
+        const dotCount = 30;
+        const dots = [];
+        const maxDistance = 150; // Maximum distance for connecting lines
+        
+        for (let i = 0; i < dotCount; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            
+            // Random initial position
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            
+            floatingDots.appendChild(dot);
+            
+            // Store dot and its movement properties
+            dots.push({
+                element: dot,
+                x: x,
+                y: y,
+                xSpeed: (Math.random() - 0.5) * 0.5,
+                ySpeed: (Math.random() - 0.5) * 0.5
+            });
+        }
+        
+        // Create canvas for lines
+        const canvas = document.createElement('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.zIndex = '-1';
+        canvas.style.pointerEvents = 'none';
+        floatingDots.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Animate dots and draw connections
+        function animateDots() {
+            // Clear previous frame
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Get current overlay opacity to match line opacity
+            const overlayColor = window.getComputedStyle(overlay).backgroundColor;
+            const overlayOpacity = parseFloat(overlayColor.split(',')[3] || 1);
+            
+            // Update dot positions and draw connections
+            dots.forEach((dot, i) => {
+                // Update position
+                dot.x += dot.xSpeed;
+                dot.y += dot.ySpeed;
+                
+                // Bounce off edges
+                if (dot.x < 0 || dot.x > window.innerWidth) {
+                    dot.xSpeed *= -1;
+                }
+                if (dot.y < 0 || dot.y > window.innerHeight) {
+                    dot.ySpeed *= -1;
+                }
+                
+                // Apply new position
+                dot.element.style.left = `${dot.x}px`;
+                dot.element.style.top = `${dot.y}px`;
+                
+                // Draw connections to nearby dots
+                for (let j = i + 1; j < dots.length; j++) {
+                    const otherDot = dots[j];
+                    const dx = otherDot.x - dot.x;
+                    const dy = otherDot.y - dot.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < maxDistance) {
+                        // Calculate line opacity based on distance
+                        const lineOpacity = (1 - distance / maxDistance) * 0.4 * overlayOpacity;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(dot.x, dot.y);
+                        ctx.lineTo(otherDot.x, otherDot.y);
+                        ctx.strokeStyle = `rgba(136, 136, 136, ${lineOpacity})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            requestAnimationFrame(animateDots);
+        }
+        
+        animateDots();
+        
+        // Handle scroll
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const maxScroll = 500; // how fast it fades
+            const opacity = Math.max(0, 1 - scrollY / maxScroll);
+            
+            overlay.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+            
+            // Update dots opacity
+            dots.forEach(dot => {
+                dot.element.style.opacity = 0.7 * opacity;
+            });
+        });
+        
+        // FAQ Accordion Functionality
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const answer = button.nextElementSibling;
+                const isActive = button.classList.contains('active');
+                
+                // Close all other FAQs
+                document.querySelectorAll('.faq-question').forEach(btn => {
+                    if (btn !== button) {
+                        btn.classList.remove('active');
+                        btn.nextElementSibling.classList.remove('show');
+                    }
+                });
+                
+                // Toggle current one
+                button.classList.toggle('active');
+                answer.classList.toggle('show');
+                
+                // Reset animation for the answer content
+                if (answer.classList.contains('show')) {
+                    const answerInner = answer.querySelector('.faq-answer-inner');
+                    answerInner.style.animation = 'none';
+                    void answerInner.offsetWidth; // Trigger reflow
+                    answerInner.style.animation = 'fadeIn 0.3s ease-out forwards';
+                    answerInner.style.animationDelay = '0.1s';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
